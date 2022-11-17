@@ -1,22 +1,36 @@
+import multiprocessing
 import numpy as np
 import os
 import pandas as pd
 
-# nrows_read = 1000
+nrows_read = 20000
 training_split = 0.8
 
 datasets_path = 'dataset/archive/'
-datasets = {'I04'}#, 'INT03', 'MM03', 'MM05', 'S02', 'S04'}
+datasets = {'I04', 'INT03', 'MM03', 'MM05', 'S02', 'S04'}
 
 train_output_path = 'train/'
 test_output_path = 'test/'
 
-if not os.path.exists(train_output_path):
-    os.makedirs(train_output_path)
-if not os.path.exists(test_output_path):
-    os.makedirs(test_output_path)
+def main():
+    if not os.path.exists(train_output_path):
+        os.makedirs(train_output_path)
+    if not os.path.exists(test_output_path):
+        os.makedirs(test_output_path)
 
-for dataset in datasets:
+    processes = []
+
+    for dataset in datasets:
+        processes.append(multiprocessing.Process(target=parse_dataset, args=(dataset,)))
+    
+    for p in processes:
+        p.start()
+    
+    for p in processes:
+        p.join()
+
+
+def parse_dataset(dataset):
     print(f'Formatting {dataset} dataset...')
     df = pd.read_csv(datasets_path + dataset + '.csv', index_col=0)#, nrows=nrows_read)
 
@@ -35,7 +49,7 @@ for dataset in datasets:
     sat_count_offset = 33
     for index, row in df.iterrows():
         if (index % 20000 == 0):
-            print(index)
+            print(f'{dataset}: {index}')
         df_select.loc[index, 'PC'] = int("".join(str(int(x)) for x in row[0:32].tolist()), 2)
 
         # Counters normalized from [0 1], convert to int
@@ -60,3 +74,6 @@ for dataset in datasets:
     df_select.iloc[:training_datapoints].to_csv(train_output_path + dataset + '_train.csv')
     df_select.iloc[training_datapoints:].to_csv(test_output_path + dataset + '_test.csv')
 
+
+if __name__ == "__main__":
+    main()
