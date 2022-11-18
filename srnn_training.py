@@ -5,7 +5,7 @@ from srnn import SRNN
 def main():
     train_df = pd.read_csv('cleaned_datasets/train/S04_train.csv', dtype=np.uint64)
 
-    srnn = SRNN()
+    srnn = SRNN(pht_dtype=np.int32, pht_size=256, pht_update_weight=3)
 
     correct_predictions = 0
     total_predictions = 0

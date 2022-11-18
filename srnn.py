@@ -1,22 +1,25 @@
 import numpy as np
 
 class SRNN():
-    def __init__(self):
+    def __init__(self, pht_size, pht_dtype=np.int8, pht_update_weight=1):
         self.ghr_size = 32
+        self.pht_size = np.uint16(pht_size)
+        self.pht_index_mask = self.pht_size - np.uint16(1)
+        self.pht_update_weight = pht_update_weight
         self.last_prediction = 0
 
         # 32 bit global history register
         self.ghr = np.ones(self.ghr_size, dtype=np.int8)
 
         # Pattern history table
-        self.pht_w = np.random.randint(low=-16, high=16, size=(256,32), dtype=np.int8)
-        self.pht_u = np.random.randint(low=-1, high=2, size=(256,31), dtype=np.int8)
+        self.pht_w = np.random.randint(low=-16, high=16, size=(self.pht_size,32), dtype=pht_dtype)
+        self.pht_u = np.random.randint(low=-1, high=2, size=(self.pht_size,31), dtype=pht_dtype)
 
 
     def predict(self, pc):
         s_val = np.zeros(32, dtype=np.int64)
-        w_val = self.pht_w[pc & np.uint64(0x1F)]
-        u_val = self.pht_u[pc & np.uint64(0x1F)]
+        w_val = self.pht_w[pc & self.pht_index_mask]
+        u_val = self.pht_u[pc & self.pht_index_mask]
         u_index = 0
         u_increment = 2
 
@@ -50,8 +53,8 @@ class SRNN():
 
 
     def update_pht(self, pc, predicted, actual):
-        w_val = self.pht_w[pc & np.uint64(0x1F)]
-        u_val = self.pht_u[pc & np.uint64(0x1F)]
+        w_val = self.pht_w[pc & self.pht_index_mask]
+        u_val = self.pht_u[pc & self.pht_index_mask]
         update_thresh = 10
         u_index = 0
         u_increment = 2
@@ -63,9 +66,9 @@ class SRNN():
             # Increment weight if it had the correct prediction
             for i in range(32):
                 if self.ghr[i] == actual:
-                    w_val[i] += 1
+                    w_val[i] += self.pht_update_weight
                 else:
-                    w_val[i] -= 1
+                    w_val[i] -= self.pht_update_weight
 
             for i in range(31):
                 if self.ghr[i] == actual:
