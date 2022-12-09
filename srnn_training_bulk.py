@@ -21,12 +21,12 @@ def main():
 
 
 def train_srnn(dataset, path):
-    output_path = f'results/{dataset}'
+    output_path = f'results_v4_dec8/{dataset}'
 
     pht_dtypes = [np.int8, np.int16, np.int32, np.int64]
     pht_sizes = [64, 128, 256, 512, 1024, 4096]
-    training_lengths = [1000, 10000, 50000, 400000]
-    weights = [1, 5]
+    training_lengths = [10000, 100000, 400000]
+    weights = [1, 3, 5]
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -62,8 +62,7 @@ def train_srnn(dataset, path):
                         total_predictions += 1
                         if (index < training):
                             srnn.update_pht(pc=row['PC'], predicted=prediction, actual=row['result'])
-                        else:
-                            srnn.update_ght(1 if row['result'] == 1 else -1)
+                        srnn.update_ght(1 if row['result'] == 1 else -1)
                         
                         if total_predictions in record_accuracies:
                             results_dict[f'Acc: {total_predictions}'] = correct_predictions / total_predictions

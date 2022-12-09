@@ -72,6 +72,8 @@ class SRNN():
 
 
     def update_pht(self, pc, predicted, actual):
+        if predicted == actual:
+            return
         w_val = self.pht_w[(int(pc) >> 2) & self.pht_index_mask]
         u_val = self.pht_u[(int(pc) >> 2) & self.pht_index_mask]
         update_thresh = 10
@@ -98,5 +100,3 @@ class SRNN():
                 if u_index >= 31:
                     u_index = u_increment - 1
                     u_increment = u_increment << 1       
-        
-        self.update_ght(actual) 
